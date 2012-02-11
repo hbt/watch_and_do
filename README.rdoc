@@ -1,6 +1,6 @@
 = watch_and_do
 
-Description goes here.
+watches files ending with specific extensions in directories and executes a command/script
 
 == Contributing to watch_and_do
  
