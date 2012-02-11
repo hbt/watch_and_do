@@ -1,0 +1,70 @@
+#!/usr/bin/env ruby
+
+require 'optparse'
+
+# options + arguments + usage/examples section
+optparse = OptionParser.new do|opts|
+  opts.banner = "Usage: watch_and_do directory_name extension1,extension2 scriptName \n
+Example:  watch_and_do /tmp/ss js,coffee,rb /tmp/do.rb
+  "
+
+  opts.on( '-h', '--help', 'Displays this screen' ) do
+    puts opts
+    exit
+  end
+end
+
+optparse.parse!
+
+# returns full path in case relatives paths are passed
+def get_full_path(path)
+  if !File::exists? path
+    Dir.pwd + File::SEPARATOR + path
+  end
+
+  return path
+end
+
+if ARGV.size == 3
+  valid = true
+
+  dir = File.new get_full_path(ARGV[0])
+  extensions = ARGV[1].split(',')
+  script = ARGV[2]
+
+
+  # validation (path + script exist)
+  if !File::exists? dir
+    valid = false
+    puts "invalid directory name"
+  end
+
+
+  if valid
+    # start watch + call script on modified file
+    while true do
+      line = %x[inotifywait -e modify -q -r #{dir.path}]
+      #      line = "/tmp/ss/ MODIFY asd.txt"
+
+      str = dir.path + " MODIFY "
+
+      filename = line.gsub(str, '')
+      filename = dir.path + filename
+      filename.strip!
+
+      extensions.each do |ext|
+        if filename.end_with? ext
+          puts %x[#{script} #{filename}]
+          break
+        end
+      end
+
+    end
+  end
+
+else
+  puts "invalid number of arguments"
+end
+
+
+
