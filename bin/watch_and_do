@@ -6,6 +6,7 @@ require 'optparse'
 optparse = OptionParser.new do|opts|
   opts.banner = "Usage: watch_and_do directory_name extension1,extension2 scriptName \n
 Example:  watch_and_do /tmp/ss js,coffee,rb /tmp/do.rb
+Example:  watch_and_do . coffee ./rebuild.sh
   "
 
   opts.on( '-h', '--help', 'Displays this screen' ) do
@@ -18,7 +19,9 @@ optparse.parse!
 
 # returns full path in case relatives paths are passed
 def get_full_path(path)
-  if !File::exists? path
+  if path == '.'
+    path = Dir.pwd
+  elsif !File::exists? path
     Dir.pwd + File::SEPARATOR + path
   end
 
@@ -39,17 +42,14 @@ if ARGV.size == 3
     puts "invalid directory name"
   end
 
-
   if valid
     # start watch + call script on modified file
     while true do
       line = %x[inotifywait -e modify -q -r #{dir.path}]
-      #      line = "/tmp/ss/ MODIFY asd.txt"
 
-      str = dir.path + " MODIFY "
+      words = line.split(' MODIFY ')
 
-      filename = line.gsub(str, '')
-      filename = dir.path + filename
+      filename = words[0] + words[1]
       filename.strip!
 
       extensions.each do |ext|
